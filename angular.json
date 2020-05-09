@@ -123,6 +123,10 @@
           }
         }
       }
-    }},
-  "defaultProject": "snake-game"
+    }
+  },
+  "defaultProject": "snake-game",
+  "cli": {
+    "analytics": "f3fe633d-baa2-41e3-8ef1-02b6efcb6904"
+  }
 }
