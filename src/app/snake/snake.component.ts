@@ -35,7 +35,6 @@ export class SnakeComponent implements OnInit {
   private snakeSpeed = 10;
   private direction = SnakeComponent.DIRECTIONS.right;
   private snakeHeight = 8;
-  private fieldElement;
   private intervalId: number;
 
   public snakePieces = [
@@ -59,9 +58,8 @@ export class SnakeComponent implements OnInit {
     }
   }
 
-  constructor(@Inject(DOCUMENT) document) {
+  constructor() {
     this.move();
-    this.fieldElement = document.getElementById('field');
   }
 
   private resizeSnakeTail(snakeTail, pxQuantityToChange): any {
@@ -110,7 +108,67 @@ export class SnakeComponent implements OnInit {
     const { offsetWidth, offsetHeight } = document.getElementById('field');
     const { left, top, width, height } = snakeHead;
 
-    return left === 0 || top === 0 || left === (offsetWidth - width) || top === (offsetHeight - height);
+    const headTouchablePoints = Array(this.snakeHeight).fill('').map((_, index) => {
+      if (snakeHead.direction.value === SnakeComponent.DIRECTIONS.right.value) {
+        return { left: (left + width), top: top + (index + 1) };
+      }
+      if (snakeHead.direction.value === SnakeComponent.DIRECTIONS.left.value) {
+        return { left, top: top + (index + 1) };
+      }
+      if (snakeHead.direction.value === SnakeComponent.DIRECTIONS.top.value) {
+        return { left: left + (index + 1), top };
+      }
+      if (snakeHead.direction.value === SnakeComponent.DIRECTIONS.bottom.value) {
+        return { left: left + (index + 1), top: (top + height) };
+      }
+      return { left, top };
+    });
+
+    const borderCollision = headTouchablePoints.some((point) => {
+      return (point.left === 0 || point.top === 0 || point.left === offsetWidth || point.top === offsetHeight);
+    });
+
+    if (borderCollision) {
+      return true;
+    }
+
+    const snakeCollision = headTouchablePoints.some((point) => {
+      return this.snakePieces.some((piece, index) => {
+        if (index < 3) {
+          return false;
+        }
+
+        const snakePieceTouchablePoints = [];
+        const snakePieceSize = this.isHorizontalMovement(piece.direction.value) ? piece.width : piece.height;
+
+        Array(this.snakeHeight).fill('').forEach((__, index1) => {
+          Array(snakePieceSize).fill('').forEach((_, index2) => {
+            if (piece.direction.value === SnakeComponent.DIRECTIONS.right.value) {
+              snakePieceTouchablePoints.push({ left: (piece.left + piece.width) - index2, top: piece.top + index1 });
+            }
+            if (piece.direction.value === SnakeComponent.DIRECTIONS.left.value) {
+              snakePieceTouchablePoints.push({ left: piece.left + index2, top: piece.top + index1 });
+            }
+            if (piece.direction.value === SnakeComponent.DIRECTIONS.top.value) {
+              snakePieceTouchablePoints.push({ left: piece.left + index1, top: piece.top + index2 });
+            }
+            if (piece.direction.value === SnakeComponent.DIRECTIONS.bottom.value) {
+              snakePieceTouchablePoints.push({ left: piece.left + index1, top: (piece.top + piece.height) - index2 });
+            }
+          });
+        });
+
+        const hasCollision = snakePieceTouchablePoints.some(tp => tp.left === point.left && tp.top === point.top);
+
+        return hasCollision;
+      });
+    });
+
+    if (snakeCollision) {
+      return true;
+    }
+
+    return false;
   }
 
   private stop(): void {
