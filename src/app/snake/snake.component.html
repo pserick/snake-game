@@ -1,7 +1,10 @@
 <div
-  class="snake"
-  [style.width.px]="width"
-  [style.height.px]="height"
+  class="snake-piece"
+  *ngFor="let snakePiece of snakePieces"
+  [style.width.px]="snakePiece.width"
+  [style.height.px]="snakePiece.height"
+  [style.top.px]="snakePiece.top"
+  [style.left.px]="snakePiece.left"
+  [attr.data-direction]="snakePiece.direction.value"
 >
-
 </div>
