@@ -7,8 +7,9 @@ import { Component, OnInit } from '@angular/core';
 })
 
 export class FieldComponent implements OnInit {
-  width = '700';
-  height = '400';
+  private frame = 8;
+  width = this.frame * 100;
+  height = this.frame * 50;
 
   constructor() { }
 

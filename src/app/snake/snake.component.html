@@ -8,3 +8,13 @@
   [attr.data-direction]="snakePiece.direction.value"
 >
 </div>
+
+<div
+  class="snake-debbug"
+  *ngFor="let touchablePoint of touchablePoints"
+  [style.width.px]="8"
+  [style.height.px]="8"
+  [style.top.px]="touchablePoint.top"
+  [style.left.px]="touchablePoint.left"
+>
+</div>
