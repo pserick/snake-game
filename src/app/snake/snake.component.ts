@@ -150,9 +150,8 @@ export class SnakeComponent implements OnInit {
           }
         );
       });
-    })
+    });
 
-    console.log(snakeFoods.length);
     this.snakeFoods = snakeFoods;
   }
 
@@ -190,36 +189,19 @@ export class SnakeComponent implements OnInit {
     clearInterval(this.intervalId);
   }
 
-  private findNewTailPosition(tailX, tailY, direction) {
+  private findNextFrameByDirection(posX, posY, direction) {
     switch (direction) {
       case SnakeComponent.DIRECTIONS.right.value:
-        return [tailX + 1, tailY];
+        return [posX + 1, posY];
         break;
       case SnakeComponent.DIRECTIONS.left.value:
-        return [tailX - 1, tailY];
+        return [posX - 1, posY];
         break;
       case SnakeComponent.DIRECTIONS.top.value:
-        return [tailX, tailY - 1];
+        return [posX, posY - 1];
         break;
       case SnakeComponent.DIRECTIONS.bottom.value:
-        return [tailX, tailY + 1];
-        break;
-    }
-  }
-
-  private findNewHeadPosition(headX, headY, direction) {
-    switch (direction) {
-      case SnakeComponent.DIRECTIONS.right.value:
-        return [headX + 1, headY];
-        break;
-      case SnakeComponent.DIRECTIONS.left.value:
-        return [headX - 1, headY];
-        break;
-      case SnakeComponent.DIRECTIONS.top.value:
-        return [headX, headY - 1];
-        break;
-      case SnakeComponent.DIRECTIONS.bottom.value:
-        return [headX, headY + 1];
+        return [posX, posY + 1];
         break;
     }
   }
@@ -233,8 +215,8 @@ export class SnakeComponent implements OnInit {
       const tailX = snakeTail.index[0];
       const tailY = snakeTail.index[1];
 
-      const newTailElementIndex = this.findNewTailPosition(tailX, tailY, snakeTail.direction.value);
-      const newHeadElementIndex = this.findNewHeadPosition(headX, headY, snakeHead.direction.value);
+      const newTailElementIndex = this.findNextFrameByDirection(tailX, tailY, snakeTail.direction.value);
+      const newHeadElementIndex = this.findNextFrameByDirection(headX, headY, snakeHead.direction.value);
 
       const newHeadX = newHeadElementIndex[0];
       const newHeadY = newHeadElementIndex[1];
