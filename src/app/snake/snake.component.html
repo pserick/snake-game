@@ -1,3 +1,8 @@
+<h1
+  class="snake-score"
+>
+  score: {{score}}
+</h1>
 <div
   class="snake-piece"
   *ngFor="let snakePiece of snakePieces"
@@ -7,5 +12,14 @@
   [style.left.px]="snakePiece.left"
   [attr.data-direction]="snakePiece.direction.value"
   [attr.data-part]="snakePiece.part"
+>
+</div>
+<div
+  class="snake-food"
+  *ngFor="let snakeFood of snakeFoods"
+  [style.width.px]="snakeFood.width"
+  [style.height.px]="snakeFood.height"
+  [style.top.px]="snakeFood.top"
+  [style.left.px]="snakeFood.left"
 >
 </div>

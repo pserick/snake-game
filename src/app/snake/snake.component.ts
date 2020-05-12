@@ -1,4 +1,4 @@
-import { Component, HostListener, OnInit} from '@angular/core';
+import { Component, HostListener, OnInit } from '@angular/core';
 
 @Component({
   selector: 'app-snake',
@@ -38,7 +38,10 @@ export class SnakeComponent implements OnInit {
   private increaseSnake = 0;
 
   public snakePieces = [];
+  public snakeFoods = [];
   public matrix = [];
+
+  public score = 0;
 
   @HostListener('window:keydown', ['$event'])
   keyEvent(event: KeyboardEvent) {
@@ -53,8 +56,37 @@ export class SnakeComponent implements OnInit {
 
   constructor() {
     this.matrix = this.createEmptyMatrix();
+    this.generateFoodInARandomPosition(2);
     this.mountInitialSnake(10);
     this.move();
+  }
+
+  private randomIntFromIntervalAndFrame(min: number, max: number, frame: number): number {
+    return Math.round((Math.random() * (max - min) + min) / frame) * frame;
+  }
+
+  private generateFoodInARandomPosition(quantity: number): void {
+    // const { offsetWidth, offsetHeight } = document.getElementById('field');
+
+    Array(quantity).fill('').map((_, index) => {
+      let isFrameOccupied = true;
+      let frameX;
+      let frameY;
+
+      while (isFrameOccupied) {
+        frameX =  this.randomIntFromIntervalAndFrame(0, (800 - this.frame), this.frame) / 8;
+        frameY =  this.randomIntFromIntervalAndFrame(0, (400 - this.frame), this.frame) / 8;
+
+        isFrameOccupied = this.matrix[frameX][frameY].isFullFilled;
+      }
+
+      this.matrix[frameX][frameY].isFullFilled = true;
+      this.matrix[frameX][frameY].filledObject = {
+        type: 'food',
+      };
+    });
+
+    this.calculateFoodPieces(this.matrix);
   }
 
   private createEmptyMatrix() {
@@ -101,6 +133,29 @@ export class SnakeComponent implements OnInit {
     this.calculateSnakePieces(this.matrix);
   }
 
+  private calculateFoodPieces(matrix): void {
+    const snakeFoods = [];
+
+    matrix.map(line => {
+      const filledFramesByFood = line.filter(c => c.isFullFilled && c.filledObject.type === 'food');
+
+      filledFramesByFood.map((fl) => {
+        snakeFoods.push(
+          {
+            width: this.frame,
+            height: this.frame,
+            top: fl.top,
+            left: fl.left,
+            index: fl.index,
+          }
+        );
+      });
+    })
+
+    console.log(snakeFoods.length);
+    this.snakeFoods = snakeFoods;
+  }
+
   private calculateSnakePieces(matrix): void {
     const snakePieces = [];
 
@@ -133,10 +188,6 @@ export class SnakeComponent implements OnInit {
 
   private stop(): void {
     clearInterval(this.intervalId);
-  }
-
-  private increaseSnakeSize(framesToIncrease: number): void {
-    this.increaseSnake += framesToIncrease;
   }
 
   private findNewTailPosition(tailX, tailY, direction) {
@@ -206,6 +257,24 @@ export class SnakeComponent implements OnInit {
         return;
       }
 
+      const foodWasCaught = newHeadElement.isFullFilled && newHeadElement.filledObject.type === 'food';
+
+      if (foodWasCaught) {
+        this.score += 150;
+        this.increaseSnake += 5;
+      }
+
+      // If there is no need to increase the snake size
+      // only move the tail to the forward position
+      if (!this.increaseSnake) {
+        oldTailElement.isFullFilled = false;
+        oldTailElement.filledObject = {};
+
+        newTailElement.filledObject.part = 'tail';
+      } else {
+        this.increaseSnake -= 1;
+      }
+
       oldHeadElement.filledObject.part = 'body';
 
       const newDirectionsQueueLength = this.newDirectionsQueue.length;
@@ -227,23 +296,19 @@ export class SnakeComponent implements OnInit {
         direction,
       };
 
-      if (this.increaseSnake > 0) {
-        this.increaseSnake -= 1;
-      } else {
-        oldTailElement.isFullFilled = false;
-        oldTailElement.filledObject = {};
+      this.calculateSnakePieces(this.matrix);
+      this.calculateFoodPieces(this.matrix);
 
-        newTailElement.filledObject.part = 'tail';
+      if (this.snakeFoods.length === 0) {
+        this.generateFoodInARandomPosition(20);
       }
 
-      this.calculateSnakePieces(this.matrix);
     }, this.snakeSpeed);
   }
 
   public changeDirection(newDirectionKey: string): void {
     const newDirection = SnakeComponent.DIRECTIONS[newDirectionKey];
     this.newDirectionsQueue.push(newDirection);
-    this.increaseSnakeSize(1);
   }
 
   ngOnInit(): void {
