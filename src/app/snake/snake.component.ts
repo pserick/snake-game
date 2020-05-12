@@ -35,18 +35,10 @@ export class SnakeComponent implements OnInit {
   private frame = this.snakeSize;
   private intervalId: number;
   private newDirectionsQueue = [];
+  private increaseQueue = [];
 
-  public touchablePoints = [];
-
-  public snakePieces = [
-    {
-      width: this.snakeSize * 8,
-      height: this.snakeSize,
-      top: this.frame * 10,
-      left: this.frame * 5,
-      direction: SnakeComponent.DIRECTIONS.right,
-    }
-  ];
+  public snakePieces = [];
+  public matrix = [];
 
   @HostListener('window:keydown', ['$event'])
   keyEvent(event: KeyboardEvent) {
@@ -60,286 +52,222 @@ export class SnakeComponent implements OnInit {
   }
 
   constructor() {
+    const snakePieces = [];
+    const matrix = Array(800 / this.frame)
+      .fill('')
+      .map((_, indexWidth) => Array(400 / this.frame).fill('').map((__, indexHeight) => ({
+        left: indexWidth * this.frame,
+        top: indexHeight * this.frame,
+        isFullFilled: false,
+        filledObject: {
+          type: '',
+          part: '',
+          direction: {},
+        },
+        index: [indexWidth, indexHeight],
+      })));
+
+    const snakeBody = {
+      type: 'snake',
+      part: 'body',
+      direction: SnakeComponent.DIRECTIONS.right,
+    };
+
+    const snakeHead = {
+      type: 'snake',
+      part: 'head',
+      direction: SnakeComponent.DIRECTIONS.right,
+    };
+
+    const snakeTail = {
+      type: 'snake',
+      part: 'tail',
+      direction: SnakeComponent.DIRECTIONS.right,
+    };
+
+    matrix[7][7].isFullFilled = true;
+    matrix[7][7].filledObject = snakeTail;
+
+    matrix[8][7].isFullFilled = true;
+    matrix[8][7].filledObject = snakeBody;
+
+    matrix[9][7].isFullFilled = true;
+    matrix[9][7].filledObject = snakeBody;
+
+    matrix[10][7].isFullFilled = true;
+    matrix[10][7].filledObject = snakeBody;
+
+    matrix[11][7].isFullFilled = true;
+    matrix[11][7].filledObject = snakeBody;
+
+    matrix[12][7].isFullFilled = true;
+    matrix[12][7].filledObject = snakeBody;
+
+    matrix[13][7].isFullFilled = true;
+    matrix[13][7].filledObject = snakeBody;
+
+    matrix[14][7].isFullFilled = true;
+    matrix[14][7].filledObject = snakeBody;
+
+    matrix[15][7].isFullFilled = true;
+    matrix[15][7].filledObject = snakeBody;
+
+    matrix[16][7].isFullFilled = true;
+    matrix[16][7].filledObject = snakeBody;
+
+    matrix[17][7].isFullFilled = true;
+    matrix[17][7].filledObject = snakeBody;
+
+    matrix[18][7].isFullFilled = true;
+    matrix[18][7].filledObject = snakeHead;
+
+    this.matrix = matrix;
+    this.calculateSnakePieces(matrix);
+
     this.move();
   }
 
-  private resizeSnakeTail(snakeTail, pxQuantityToChange): any {
-    const snakeTailCopy = { ...snakeTail };
-    const tailDirection = snakeTailCopy.direction.value;
+  private calculateSnakePieces(matrix): void {
+    const snakePieces = [];
 
-    if (tailDirection === SnakeComponent.DIRECTIONS.right.value) {
-      snakeTailCopy.width += pxQuantityToChange;
-      snakeTailCopy.left -= pxQuantityToChange;
-    }
-    if (tailDirection === SnakeComponent.DIRECTIONS.left.value) {
-      snakeTailCopy.width += pxQuantityToChange;
-    }
-    if (tailDirection === SnakeComponent.DIRECTIONS.top.value) {
-      snakeTailCopy.height += pxQuantityToChange;
-    }
-    if (tailDirection === SnakeComponent.DIRECTIONS.bottom.value) {
-      snakeTailCopy.height += pxQuantityToChange;
-      snakeTailCopy.top -= pxQuantityToChange;
-    }
+    matrix.map(line => {
+      const filledFrames = line.filter(c => c.isFullFilled && c.filledObject.type === 'snake');
+      filledFrames.map((fl) => {
+        snakePieces.push(
+          {
+            width: this.frame,
+            height: this.frame,
+            top: fl.top,
+            left: fl.left,
+            direction: fl.filledObject.direction,
+            part: fl.filledObject.part,
+            index: fl.index,
+          }
+        );
+      });
+    });
 
-    return snakeTailCopy;
+    this.snakePieces = snakePieces;
   }
 
-  private isValidMovement(newDirectionKey: string): boolean {
+  private isValidMovement(newDirectionKey: string, headDirection): boolean {
     const newDirection = SnakeComponent.DIRECTIONS[newDirectionKey];
-    const allowedMovements = this.snakePieces[0].direction.allowedMovements;
+    const allowedMovements = headDirection.allowedMovements;
 
     return newDirection && allowedMovements.includes(newDirection.value);
-  }
-
-  private isHorizontalMovement(direction: string): boolean {
-    return direction === SnakeComponent.DIRECTIONS.right.value ||
-      direction === SnakeComponent.DIRECTIONS.left.value;
-  }
-
-  private shouldRemoveTailFromPiecesArray(snakeTail): boolean {
-    const tailDirection = snakeTail.direction.value;
-
-    return this.isHorizontalMovement(tailDirection) ?
-      (snakeTail.width === this.snakeSize) :
-      (snakeTail.height === this.snakeSize);
-  }
-
-  private getSnakeHeadTouchableCoordinate(snakeHead): { left, top } {
-    const { left, top, width, height } = snakeHead;
-    let touchableCoordinate = {
-      left: 0,
-      top: 0,
-    };
-
-    if (snakeHead.direction.value === SnakeComponent.DIRECTIONS.right.value) {
-      touchableCoordinate = { left: (left + width), top: top + this.frame };
-    }
-    if (snakeHead.direction.value === SnakeComponent.DIRECTIONS.left.value) {
-      touchableCoordinate = { left, top: top + this.frame };
-    }
-    if (snakeHead.direction.value === SnakeComponent.DIRECTIONS.top.value) {
-      touchableCoordinate = { left: left + this.frame, top };
-    }
-    if (snakeHead.direction.value === SnakeComponent.DIRECTIONS.bottom.value) {
-      touchableCoordinate = { left: left + this.frame, top: (top + height) };
-    }
-
-    return touchableCoordinate;
-  }
-
-  private hasCollisionWithBorder(
-    snakeHeadTouchableCoordinate: { left; top },
-    border: { width: number; height: number }
-  ): boolean {
-    const { left, top } = snakeHeadTouchableCoordinate;
-    const { width, height } = border;
-    return left === 0 || top === 0 || left === width || top === height;
-  }
-
-  private hasCollisionWithSnakeBody(
-    snakeHeadTouchableCoordinate: { left; top },
-    snakePieces: Array<any>,
-  ): boolean {
-    return this.snakePieces.some((piece, index) => {
-      // Impossible to collide the first 2 movements
-      if (index < 2) {
-        return false;
-      }
-
-      const snakePieceTouchablePoints = [];
-      const snakePieceSize = this.isHorizontalMovement(piece.direction.value) ? piece.width : piece.height;
-      const loopsSize = snakePieceSize / this.frame;
-
-      Array(loopsSize).fill('').forEach((_, i) => {
-        if (piece.direction.value === SnakeComponent.DIRECTIONS.right.value) {
-          snakePieceTouchablePoints.push({
-            left: ((piece.left + piece.width) - this.frame) - (i * this.frame),
-            top: piece.top
-          });
-        }
-        if (piece.direction.value === SnakeComponent.DIRECTIONS.left.value) {
-          snakePieceTouchablePoints.push({
-            left: piece.left + (i * this.frame),
-            top: piece.top
-          });
-        }
-        if (piece.direction.value === SnakeComponent.DIRECTIONS.top.value) {
-          snakePieceTouchablePoints.push({
-            left: piece.left,
-            top: piece.top + (i * this.frame),
-          });
-        }
-        if (piece.direction.value === SnakeComponent.DIRECTIONS.bottom.value) {
-          snakePieceTouchablePoints.push({
-            left: piece.left,
-            top: ((piece.top + piece.height) - this.frame) - (i * this.frame),
-          });
-        }
-      });
-
-      // this.touchablePoints = snakePieceTouchablePoints;
-
-      return snakePieceTouchablePoints.some((tp) =>
-        tp.left === snakeHeadTouchableCoordinate.left && tp.top === snakeHeadTouchableCoordinate.top
-      );
-    });
-  }
-
-  private collisionDetected(snakeHead): boolean {
-    const { offsetWidth, offsetHeight } = document.getElementById('field');
-
-    const hasCollisionWithBorder = this.hasCollisionWithBorder(
-      this.getSnakeHeadTouchableCoordinate(snakeHead),
-      {
-        width: offsetWidth,
-        height: offsetHeight,
-      }
-    );
-
-    const hasCollisionWithSnakeBody = this.hasCollisionWithSnakeBody(
-      this.getSnakeHeadTouchableCoordinate(snakeHead),
-      this.snakePieces,
-    );
-
-    return hasCollisionWithBorder || hasCollisionWithSnakeBody;
   }
 
   private stop(): void {
     clearInterval(this.intervalId);
   }
 
-  private increaseSnakeSize(pxToIncrease: number): void {
-    const snakeTail = this.snakePieces[this.snakePieces.length - 1];
-    const snakePiecesCopy = [...this.snakePieces];
-    const newSnakeTail = this.resizeSnakeTail(snakeTail, pxToIncrease);
+  // private increaseSnakeSize(pxToIncrease: number): void {
+  //   const newDirectionsQueueLength = this.newDirectionsQueue.length;
+  //   const newDirection = this.newDirectionsQueue[newDirectionsQueueLength - 1];
+  //   let direction = snakeHead.direction;
+  //
+  //   if (newDirection) {
+  //     this.newDirectionsQueue.pop();
+  //
+  //     if (this.isValidMovement(newDirection.value, snakeHead.direction)) {
+  //       direction = newDirection;
+  //     }
+  //   }
+  // }
 
-    snakePiecesCopy.pop();
-    snakePiecesCopy.push(newSnakeTail);
+  private findNewTailPosition(tailX, tailY, direction) {
+    switch (direction) {
+      case SnakeComponent.DIRECTIONS.right.value:
+        return [tailX + 1, tailY];
+        break;
+      case SnakeComponent.DIRECTIONS.left.value:
+        return [tailX - 1, tailY];
+        break;
+      case SnakeComponent.DIRECTIONS.top.value:
+        return [tailX, tailY - 1];
+        break;
+      case SnakeComponent.DIRECTIONS.bottom.value:
+        return [tailX, tailY + 1];
+        break;
+    }
+  }
 
-
-    this.snakePieces = snakePiecesCopy;
+  private findNewHeadPosition(headX, headY, direction) {
+    switch (direction) {
+      case SnakeComponent.DIRECTIONS.right.value:
+        return [headX + 1, headY];
+        break;
+      case SnakeComponent.DIRECTIONS.left.value:
+        return [headX - 1, headY];
+        break;
+      case SnakeComponent.DIRECTIONS.top.value:
+        return [headX, headY - 1];
+        break;
+      case SnakeComponent.DIRECTIONS.bottom.value:
+        return [headX, headY + 1];
+        break;
+    }
   }
 
   private move(): void {
     this.intervalId = setInterval(() => {
-      const snakePiecesCopy = [...this.snakePieces];
-      const newDirectionsQueueLength = this.newDirectionsQueue.length;
+      const snakeHead = this.snakePieces.find(piece => piece.part === 'head');
+      const snakeTail = this.snakePieces.find(piece => piece.part === 'tail');
+      const headX = snakeHead.index[0];
+      const headY = snakeHead.index[1];
+      const tailX = snakeTail.index[0];
+      const tailY = snakeTail.index[1];
 
-      if (newDirectionsQueueLength) {
-        const lastDirectionFromQueue = this.newDirectionsQueue[newDirectionsQueueLength - 1];
-        const newHead = this.createNewSnakeHead(lastDirectionFromQueue);
+      const newTailElementIndex = this.findNewTailPosition(tailX, tailY, snakeTail.direction.value);
+      const newHeadElementIndex = this.findNewHeadPosition(headX, headY, snakeHead.direction.value);
+      const newHeadX = newHeadElementIndex[0];
+      const newHeadY = newHeadElementIndex[1];
+      const newTailX = newTailElementIndex[0];
+      const newTailY = newTailElementIndex[1];
 
-        snakePiecesCopy.unshift(newHead);
-        this.newDirectionsQueue.pop();
-      }
+      const oldHeadElement = this.matrix[headX][headY];
+      const oldTailElement = this.matrix[tailX][tailY];
+      const newHeadElement = this.matrix[newHeadX][newHeadY];
+      const newTailElement = this.matrix[newTailX][newTailY];
 
-      const snakePiecesLength = snakePiecesCopy.length;
-      const snakeHead = snakePiecesCopy[0];
-      const snakeTail = snakePiecesLength > 1 ? snakePiecesCopy[snakePiecesLength - 1] : null;
-      switch (snakeHead.direction.value) {
-        case SnakeComponent.DIRECTIONS.top.value:
-          if (snakePiecesLength === 1) {
-            snakeHead.top -= this.frame;
-          } else {
-            snakePiecesCopy.pop();
-
-            if (!this.shouldRemoveTailFromPiecesArray(snakeTail)) {
-              const newSnakeTail = this.resizeSnakeTail(snakeTail, -(this.frame));
-
-              snakeHead.height += this.frame;
-              snakeHead.top -= this.frame;
-
-              snakePiecesCopy.push(newSnakeTail);
-            }
-          }
-          break;
-        case SnakeComponent.DIRECTIONS.bottom.value:
-          if (snakePiecesLength === 1) {
-            snakeHead.top += this.frame;
-          } else {
-            snakePiecesCopy.pop();
-
-            if (!this.shouldRemoveTailFromPiecesArray(snakeTail)) {
-              const newSnakeTail = this.resizeSnakeTail(snakeTail, -(this.frame));
-
-              snakeHead.height += this.frame;
-
-              snakePiecesCopy.push(newSnakeTail);
-            }
-          }
-          break;
-        case SnakeComponent.DIRECTIONS.left.value:
-          if (snakePiecesLength === 1) {
-            snakeHead.left -= this.frame;
-          } else {
-            snakePiecesCopy.pop();
-
-            if (!this.shouldRemoveTailFromPiecesArray(snakeTail)) {
-              const newSnakeTail = this.resizeSnakeTail(snakeTail, -(this.frame));
-
-              snakeHead.width += this.frame;
-              snakeHead.left -= this.frame;
-
-              snakePiecesCopy.push(newSnakeTail);
-            }
-          }
-          break;
-        case SnakeComponent.DIRECTIONS.right.value:
-          if (snakePiecesLength === 1) {
-            snakeHead.left += this.frame;
-          } else {
-            snakePiecesCopy.pop();
-
-            if (!this.shouldRemoveTailFromPiecesArray(snakeTail)) {
-              const newSnakeTail = this.resizeSnakeTail(snakeTail, -(this.frame));
-
-              snakeHead.width += this.frame;
-
-              snakePiecesCopy.push(newSnakeTail);
-            }
-          }
-          break;
-      }
-
-      if (this.collisionDetected(snakeHead)) {
+      if (newHeadElement.isFullFilled && newHeadElement.filledObject.type === 'snake') {
         this.stop();
         return;
       }
 
-      this.snakePieces = snakePiecesCopy;
+      oldHeadElement.filledObject.part = 'body';
+
+      const newDirectionsQueueLength = this.newDirectionsQueue.length;
+      const newDirection = this.newDirectionsQueue[newDirectionsQueueLength - 1];
+      let direction = snakeHead.direction;
+
+      if (newDirection) {
+        this.newDirectionsQueue.pop();
+
+        if (this.isValidMovement(newDirection.value, snakeHead.direction)) {
+          direction = newDirection;
+        }
+      }
+
+      newHeadElement.isFullFilled = true;
+      newHeadElement.filledObject = {
+        type: 'snake',
+        part: 'head',
+        direction,
+      };
+
+      oldTailElement.isFullFilled = false;
+      oldTailElement.filledObject = {};
+
+      newTailElement.filledObject.part = 'tail';
+
+      this.calculateSnakePieces(this.matrix);
     }, this.snakeSpeed);
   }
 
-  public createNewSnakeHead(direction): any {
-    const oldHead = this.snakePieces[0];
-    let top = oldHead.top;
-    let left = oldHead.left;
-
-    if (oldHead.direction.value === SnakeComponent.DIRECTIONS.right.value) {
-      left = left + (oldHead.width - this.frame);
-    }
-    if (oldHead.direction.value === SnakeComponent.DIRECTIONS.bottom.value) {
-      top = top + (oldHead.height - this.frame);
-    }
-
-    const newSnakeHead = {
-      width: this.snakeSize,
-      height: this.snakeSize,
-      top,
-      left,
-      direction,
-    };
-
-    return newSnakeHead;
-  }
-
   public changeDirection(newDirectionKey: string): void {
-    if (this.isValidMovement(newDirectionKey)) {
-      const newDirection = SnakeComponent.DIRECTIONS[newDirectionKey];
-      this.newDirectionsQueue.push(newDirection);
-      this.increaseSnakeSize(this.frame);
-    }
+    const newDirection = SnakeComponent.DIRECTIONS[newDirectionKey];
+    this.newDirectionsQueue.push(newDirection);
   }
 
   ngOnInit(): void {
