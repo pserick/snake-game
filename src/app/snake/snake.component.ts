@@ -1,4 +1,5 @@
 import { Component, HostListener, OnInit } from '@angular/core';
+import {DataService} from '../service/data/data.service';
 
 @Component({
   selector: 'app-snake',
@@ -33,15 +34,13 @@ export class SnakeComponent implements OnInit {
   private snakeSpeed = 50;
   private snakeSize = 8;
   private frame = this.snakeSize;
-  private intervalId: number;
+  private intervalId: ReturnType<typeof setInterval>;
   private newDirectionsQueue = [];
   private increaseSnake = 0;
 
   public snakePieces = [];
   public snakeFoods = [];
   public matrix = [];
-
-  public score = 0;
 
   @HostListener('window:keydown', ['$event'])
   keyEvent(event: KeyboardEvent) {
@@ -54,7 +53,7 @@ export class SnakeComponent implements OnInit {
     }
   }
 
-  constructor() {
+  constructor(private data: DataService) {
     this.matrix = this.createEmptyMatrix();
     this.generateFoodInARandomPosition(2);
     this.mountInitialSnake(10);
@@ -242,7 +241,7 @@ export class SnakeComponent implements OnInit {
       const foodWasCaught = newHeadElement.isFullFilled && newHeadElement.filledObject.type === 'food';
 
       if (foodWasCaught) {
-        this.score += 150;
+        this.data.incrementScore(150);
         this.increaseSnake += 5;
       }
 

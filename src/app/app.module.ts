@@ -7,6 +7,7 @@ import { FieldComponent } from './field/field.component';
 import { SnakeGameComponent } from './snake-game/snake-game.component';
 import { HomeComponent } from './home/home.component';
 import { SnakeComponent } from './snake/snake.component';
+import { ScoreComponent } from './score/score.component';
 
 @NgModule({
   declarations: [
@@ -14,7 +15,8 @@ import { SnakeComponent } from './snake/snake.component';
     FieldComponent,
     SnakeGameComponent,
     HomeComponent,
-    SnakeComponent
+    SnakeComponent,
+    ScoreComponent
   ],
   imports: [
     BrowserModule,
