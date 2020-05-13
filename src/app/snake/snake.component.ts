@@ -1,5 +1,5 @@
 import { Component, HostListener, OnInit } from '@angular/core';
-import {DataService} from '../service/data/data.service';
+import { DataService } from '../service/data/data.service';
 
 @Component({
   selector: 'app-snake',
@@ -31,16 +31,12 @@ export class SnakeComponent implements OnInit {
     },
   };
 
+  private matrix = [];
   private snakeSpeed = 50;
-  private snakeSize = 8;
-  private frame = this.snakeSize;
   private intervalId: ReturnType<typeof setInterval>;
   private newDirectionsQueue = [];
   private increaseSnake = 0;
-
   public snakePieces = [];
-  public snakeFoods = [];
-  public matrix = [];
 
   @HostListener('window:keydown', ['$event'])
   keyEvent(event: KeyboardEvent) {
@@ -53,63 +49,23 @@ export class SnakeComponent implements OnInit {
     }
   }
 
-  constructor(private data: DataService) {
-    this.matrix = this.createEmptyMatrix();
-    this.generateFoodInARandomPosition(2);
-    this.mountInitialSnake(10);
-    this.move();
-  }
+  constructor(private data: DataService) {}
 
-  private randomIntFromIntervalAndFrame(min: number, max: number, frame: number): number {
-    return Math.round((Math.random() * (max - min) + min) / frame) * frame;
-  }
-
-  private generateFoodInARandomPosition(quantity: number): void {
-    // const { offsetWidth, offsetHeight } = document.getElementById('field');
-
-    Array(quantity).fill('').map((_, index) => {
-      let isFrameOccupied = true;
-      let frameX;
-      let frameY;
-
-      while (isFrameOccupied) {
-        frameX =  this.randomIntFromIntervalAndFrame(0, (800 - this.frame), this.frame) / 8;
-        frameY =  this.randomIntFromIntervalAndFrame(0, (400 - this.frame), this.frame) / 8;
-
-        isFrameOccupied = this.matrix[frameX][frameY].isFullFilled;
-      }
-
-      this.matrix[frameX][frameY].isFullFilled = true;
-      this.matrix[frameX][frameY].filledObject = {
-        type: 'food',
-      };
+  ngOnInit(): void {
+    this.data.currentMatrix.subscribe(matrix => {
+      this.matrix = matrix;
+      this.snakePieces = this.calculateSnakePieces(matrix);
     });
 
-    this.calculateFoodPieces(this.matrix);
-  }
-
-  private createEmptyMatrix() {
-    const matrix = Array(800 / this.frame)
-      .fill('')
-      .map((_, indexWidth) => Array(400 / this.frame).fill('').map((__, indexHeight) => ({
-        left: indexWidth * this.frame,
-        top: indexHeight * this.frame,
-        isFullFilled: false,
-        filledObject: {
-          type: '',
-          part: '',
-          direction: {},
-        },
-        index: [indexWidth, indexHeight],
-      })));
-
-    return matrix;
+    this.mountInitialSnake(10);
+    this.move();
   }
 
   private mountInitialSnake(snakeSize: number): void {
     const initialPositionX = 7;
     const initialPositionY = 10;
     const initialDirection = SnakeComponent.DIRECTIONS.right;
+    const matrixCopy = [...this.matrix];
 
     Array(snakeSize).fill('').map((_, index) => {
       let part = 'body';
@@ -125,36 +81,14 @@ export class SnakeComponent implements OnInit {
         direction: initialDirection,
       };
 
-      this.matrix[initialPositionX + index][initialPositionY].isFullFilled = true;
-      this.matrix[initialPositionX + index][initialPositionY].filledObject = snakePiece;
+      matrixCopy[initialPositionX + index][initialPositionY].isFullFilled = true;
+      matrixCopy[initialPositionX + index][initialPositionY].filledObject = snakePiece;
     });
 
-    this.calculateSnakePieces(this.matrix);
+    this.data.setMatrix(matrixCopy);
   }
 
-  private calculateFoodPieces(matrix): void {
-    const snakeFoods = [];
-
-    matrix.map(line => {
-      const filledFramesByFood = line.filter(c => c.isFullFilled && c.filledObject.type === 'food');
-
-      filledFramesByFood.map((fl) => {
-        snakeFoods.push(
-          {
-            width: this.frame,
-            height: this.frame,
-            top: fl.top,
-            left: fl.left,
-            index: fl.index,
-          }
-        );
-      });
-    });
-
-    this.snakeFoods = snakeFoods;
-  }
-
-  private calculateSnakePieces(matrix): void {
+  private calculateSnakePieces(matrix): any[] {
     const snakePieces = [];
 
     matrix.map(line => {
@@ -162,8 +96,8 @@ export class SnakeComponent implements OnInit {
       filledFramesBySnake.map((fl) => {
         snakePieces.push(
           {
-            width: this.frame,
-            height: this.frame,
+            width: this.data.frameSize,
+            height: this.data.frameSize,
             top: fl.top,
             left: fl.left,
             direction: fl.filledObject.direction,
@@ -174,7 +108,7 @@ export class SnakeComponent implements OnInit {
       });
     });
 
-    this.snakePieces = snakePieces;
+    return snakePieces;
   }
 
   private isValidMovement(newDirectionKey: string, headDirection): boolean {
@@ -207,6 +141,7 @@ export class SnakeComponent implements OnInit {
 
   private move(): void {
     this.intervalId = setInterval(() => {
+      const matrixCopy = [...this.matrix];
       const snakeHead = this.snakePieces.find(piece => piece.part === 'head');
       const snakeTail = this.snakePieces.find(piece => piece.part === 'tail');
       const headX = snakeHead.index[0];
@@ -222,13 +157,13 @@ export class SnakeComponent implements OnInit {
       const newTailX = newTailElementIndex[0];
       const newTailY = newTailElementIndex[1];
 
-      const oldHeadElement = this.matrix[headX][headY];
-      const oldTailElement = this.matrix[tailX][tailY];
-      const newTailElement = this.matrix[newTailX][newTailY];
+      const oldHeadElement = matrixCopy[headX][headY];
+      const oldTailElement = matrixCopy[tailX][tailY];
+      const newTailElement = matrixCopy[newTailX][newTailY];
       let newHeadElement;
 
       try {
-        newHeadElement = this.matrix[newHeadX][newHeadY];
+        newHeadElement = matrixCopy[newHeadX][newHeadY];
         if (newHeadElement.isFullFilled && newHeadElement.filledObject.type === 'snake') {
           throw new Error('snake collision detected!');
         }
@@ -277,22 +212,12 @@ export class SnakeComponent implements OnInit {
         direction,
       };
 
-      this.calculateSnakePieces(this.matrix);
-      this.calculateFoodPieces(this.matrix);
-
-      if (this.snakeFoods.length === 0) {
-        this.generateFoodInARandomPosition(20);
-      }
-
+      this.data.setMatrix(matrixCopy);
     }, this.snakeSpeed);
   }
 
   public changeDirection(newDirectionKey: string): void {
     const newDirection = SnakeComponent.DIRECTIONS[newDirectionKey];
     this.newDirectionsQueue.push(newDirection);
-  }
-
-  ngOnInit(): void {
-
   }
 }

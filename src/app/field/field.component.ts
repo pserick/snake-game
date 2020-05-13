@@ -17,5 +17,4 @@ export class FieldComponent implements OnInit {
     this.width = this.data.fieldSizeX;
     this.height = this.data.fieldSizeY;
   }
-
 }
