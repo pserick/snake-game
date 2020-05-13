@@ -14,13 +14,7 @@ export class ScoreComponent implements OnInit{
   constructor(private data: DataService) { }
 
   ngOnInit(): void {
-    this.data.currentScore.subscribe(score => {
-      console.log(score);
-      this.score = score;
-    });
-    this.data.currentHighScore.subscribe(highScore => {
-      console.log(highScore);
-      this.highScore = highScore;
-    });
+    this.data.currentScore.subscribe(score => this.score = score);
+    this.data.currentHighScore.subscribe(highScore => this.highScore = highScore);
   }
 }
