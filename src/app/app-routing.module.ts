@@ -1,12 +1,12 @@
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
-import { SnakeGameComponent } from './games/snake/snake-game/snake-game.component';
-import { HomeComponent } from './home/home.component';
+import { ViewComponent as SnakeGameView } from './games/snake/view/view.component';
+import { ViewComponent as HomeView } from './home/view/view.component';
 
 const routes: Routes = [
   { path: '', redirectTo: '/home', pathMatch: 'full' },
-  { path: 'home', component: HomeComponent },
-  { path: 'start', component: SnakeGameComponent }
+  { path: 'home', component: HomeView },
+  { path: 'snake', component: SnakeGameView }
 ];
 
 @NgModule({
