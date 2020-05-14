@@ -135,6 +135,7 @@ export class SnakeComponent implements OnInit, OnDestroy {
       } catch (e) {
         console.log('border or snake collision detected!');
         this.data.endGame();
+        this.newDirectionsQueue = [];
         return;
       }
 
