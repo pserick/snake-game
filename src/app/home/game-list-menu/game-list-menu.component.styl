@@ -1,0 +1,24 @@
+.game-list-menu
+  width 800px
+  ul
+    width 100%
+    margin 0
+    padding 0
+    list-style none
+    display grid
+    grid-template-columns 50% 50%
+  &_item
+    width 100%
+    padding 8px
+    box-sizing border-box
+    transition transform 1s
+    &:hover
+      transform scale(1.1)
+      z-index 2
+    &_title
+      text-align center
+      font-family monospace
+      font-size 16px
+      font-weight bold
+    img
+      width 100%

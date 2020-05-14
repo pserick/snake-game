@@ -1,0 +1,21 @@
+<div class="game-list-menu">
+  <ul>
+    <li
+      class="game-list-menu_item"
+      *ngFor="let game of gamesAvailable"
+    >
+      <p class="game-list-menu_item_title">{{game.name}}</p>
+      <a routerLink="{{game.path}}">
+        <img src="{{game.img}}" >
+      </a>
+    </li>
+    <li
+      class="game-list-menu_item"
+    >
+      <p class="game-list-menu_item_title">develop a new game :)</p>
+      <a href="https://github.com/pserick/snake-game" target="_blank" rel="noopener">
+        <img src="assets/images/help-us.jpg" >
+      </a>
+    </li>
+  </ul>
+</div>

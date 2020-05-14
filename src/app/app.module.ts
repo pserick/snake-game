@@ -10,6 +10,7 @@ import { SnakeComponent } from './games/snake/snake/snake.component';
 import { ScoreComponent } from './games/snake/score/score.component';
 import { FoodComponent } from './games/snake/food/food.component';
 import { MenuComponent } from './games/snake/menu/menu.component';
+import { GameListMenuComponent } from './home/game-list-menu/game-list-menu.component';
 
 @NgModule({
   declarations: [
@@ -20,7 +21,8 @@ import { MenuComponent } from './games/snake/menu/menu.component';
     SnakeComponent,
     ScoreComponent,
     FoodComponent,
-    MenuComponent
+    MenuComponent,
+    GameListMenuComponent
   ],
   imports: [
     BrowserModule,
