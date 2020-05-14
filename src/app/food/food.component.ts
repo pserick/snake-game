@@ -1,24 +1,30 @@
-import { Component, OnInit } from '@angular/core';
-import {DataService} from '../service/data/data.service';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { DataService } from '../service/data/data.service';
+import {Subscription} from 'rxjs';
 
 @Component({
   selector: 'app-food',
   templateUrl: './food.component.html',
   styleUrls: ['./food.component.styl']
 })
-export class FoodComponent implements OnInit {
+export class FoodComponent implements OnInit, OnDestroy {
   public snakeFoods = [];
+  private matrixSubscription: Subscription;
 
   constructor(private data: DataService) { }
 
   ngOnInit(): void {
-    this.data.currentMatrix.subscribe(matrix => {
+    this.matrixSubscription = this.data.currentMatrix.subscribe(matrix => {
       this.snakeFoods = this.calculateFoodPieces(matrix);
 
       if (this.snakeFoods.length === 0) {
         this.generateFoodInARandomPosition(25, matrix);
       }
     });
+  }
+
+  ngOnDestroy(): void {
+    this.matrixSubscription.unsubscribe();
   }
 
   public generateFoodInARandomPosition(quantity: number, matrix: any[]): void {
