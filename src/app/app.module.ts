@@ -9,6 +9,7 @@ import { HomeComponent } from './home/home.component';
 import { SnakeComponent } from './snake/snake.component';
 import { ScoreComponent } from './score/score.component';
 import { FoodComponent } from './food/food.component';
+import { MenuComponent } from './menu/menu.component';
 
 @NgModule({
   declarations: [
@@ -18,7 +19,8 @@ import { FoodComponent } from './food/food.component';
     HomeComponent,
     SnakeComponent,
     ScoreComponent,
-    FoodComponent
+    FoodComponent,
+    MenuComponent
   ],
   imports: [
     BrowserModule,

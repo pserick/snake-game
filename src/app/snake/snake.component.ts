@@ -1,5 +1,7 @@
-import { Component, HostListener, OnInit } from '@angular/core';
+import { Component, HostListener, OnInit, OnDestroy } from '@angular/core';
 import { DataService } from '../service/data/data.service';
+import { SnakeDirections } from './snake-directions';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-snake',
@@ -7,41 +9,21 @@ import { DataService } from '../service/data/data.service';
   styleUrls: ['./snake.component.styl']
 })
 
-export class SnakeComponent implements OnInit {
-  public static DIRECTIONS = {
-    top: {
-      value: 'top',
-      keyPressValue: 'ArrowUp',
-      allowedMovements: ['left', 'right'],
-    },
-    bottom: {
-      value: 'bottom',
-      keyPressValue: 'ArrowDown',
-      allowedMovements: ['left', 'right'],
-    },
-    left: {
-      value: 'left',
-      keyPressValue: 'ArrowLeft',
-      allowedMovements: ['top', 'bottom'],
-    },
-    right: {
-      value: 'right',
-      keyPressValue: 'ArrowRight',
-      allowedMovements: ['top', 'bottom'],
-    },
-  };
-
+export class SnakeComponent implements OnInit, OnDestroy {
   private matrix = [];
   private snakeSpeed = 50;
   private intervalId: ReturnType<typeof setInterval>;
   private newDirectionsQueue = [];
   private increaseSnake = 0;
+  private matrixSubscription: Subscription;
+  private moveSubscription: Subscription;
+
   public snakePieces = [];
 
   @HostListener('window:keydown', ['$event'])
   keyEvent(event: KeyboardEvent) {
-    const directionKey = Object.keys(SnakeComponent.DIRECTIONS).find(d =>
-      SnakeComponent.DIRECTIONS[d].keyPressValue === event.key
+    const directionKey = Object.keys(SnakeDirections.DIRECTIONS).find(d =>
+      SnakeDirections.DIRECTIONS[d].keyPressValue === event.key
     );
 
     if (directionKey) {
@@ -52,40 +34,23 @@ export class SnakeComponent implements OnInit {
   constructor(private data: DataService) {}
 
   ngOnInit(): void {
-    this.data.currentMatrix.subscribe(matrix => {
+    this.matrixSubscription = this.data.currentMatrix.subscribe(matrix => {
       this.matrix = matrix;
       this.snakePieces = this.calculateSnakePieces(matrix);
     });
 
-    this.mountInitialSnake(10);
-    this.move();
+    this.moveSubscription = this.data.currentMoveSnake.subscribe(moveSnake => {
+      this.stop();
+      if (moveSnake === true) {
+        this.move();
+      }
+    });
   }
 
-  private mountInitialSnake(snakeSize: number): void {
-    const initialPositionX = 7;
-    const initialPositionY = 10;
-    const initialDirection = SnakeComponent.DIRECTIONS.right;
-    const matrixCopy = [...this.matrix];
-
-    Array(snakeSize).fill('').map((_, index) => {
-      let part = 'body';
-
-      if (index === 0) {
-        part = 'tail';
-      } else if (index === (snakeSize - 1)) {
-        part = 'head';
-      }
-      const snakePiece = {
-        type: 'snake',
-        part,
-        direction: initialDirection,
-      };
-
-      matrixCopy[initialPositionX + index][initialPositionY].isFullFilled = true;
-      matrixCopy[initialPositionX + index][initialPositionY].filledObject = snakePiece;
-    });
-
-    this.data.setMatrix(matrixCopy);
+  ngOnDestroy(): void {
+    this.data.endGame();
+    this.matrixSubscription.unsubscribe();
+    this.moveSubscription.unsubscribe();
   }
 
   private calculateSnakePieces(matrix): any[] {
@@ -112,7 +77,7 @@ export class SnakeComponent implements OnInit {
   }
 
   private isValidMovement(newDirectionKey: string, headDirection): boolean {
-    const newDirection = SnakeComponent.DIRECTIONS[newDirectionKey];
+    const newDirection = SnakeDirections.DIRECTIONS[newDirectionKey];
     const allowedMovements = headDirection.allowedMovements;
 
     return newDirection && allowedMovements.includes(newDirection.value);
@@ -124,16 +89,16 @@ export class SnakeComponent implements OnInit {
 
   private findNextFrameByDirection(posX, posY, direction) {
     switch (direction) {
-      case SnakeComponent.DIRECTIONS.right.value:
+      case SnakeDirections.DIRECTIONS.right.value:
         return [posX + 1, posY];
         break;
-      case SnakeComponent.DIRECTIONS.left.value:
+      case SnakeDirections.DIRECTIONS.left.value:
         return [posX - 1, posY];
         break;
-      case SnakeComponent.DIRECTIONS.top.value:
+      case SnakeDirections.DIRECTIONS.top.value:
         return [posX, posY - 1];
         break;
-      case SnakeComponent.DIRECTIONS.bottom.value:
+      case SnakeDirections.DIRECTIONS.bottom.value:
         return [posX, posY + 1];
         break;
     }
@@ -169,7 +134,7 @@ export class SnakeComponent implements OnInit {
         }
       } catch (e) {
         console.log('border or snake collision detected!');
-        this.stop();
+        this.data.endGame();
         return;
       }
 
@@ -217,7 +182,7 @@ export class SnakeComponent implements OnInit {
   }
 
   public changeDirection(newDirectionKey: string): void {
-    const newDirection = SnakeComponent.DIRECTIONS[newDirectionKey];
+    const newDirection = SnakeDirections.DIRECTIONS[newDirectionKey];
     this.newDirectionsQueue.push(newDirection);
   }
 }
