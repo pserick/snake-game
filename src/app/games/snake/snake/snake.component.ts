@@ -1,8 +1,8 @@
-import {Component, HostListener, OnDestroy, OnInit} from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
 import { DataService } from '../service/data/data.service';
-import { SnakeDirection, SnakeDirections} from './snake-directions';
-import {Subscription} from 'rxjs';
-import {Direction, Frame, Part, Type} from '../service/data/frame.interface';
+import { SnakeDirection, SnakeDirections } from './snake-directions';
+import { Subscription } from 'rxjs';
+import { Direction, Frame, Part, Type } from '../service/data/frame.interface';
 
 interface SnakePiece {
   width: number;

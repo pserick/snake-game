@@ -1,7 +1,7 @@
-import {Component, OnDestroy, OnInit} from '@angular/core';
-import {DataService} from '../service/data/data.service';
-import {Subscription} from 'rxjs';
-import {Direction, Frame, Part, Type} from '../service/data/frame.interface';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { DataService } from '../service/data/data.service';
+import { Subscription } from 'rxjs';
+import { Direction, Frame, Part, Type } from '../service/data/frame.interface';
 
 interface SnakeFood {
   width: number;
