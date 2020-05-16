@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import Cookies from 'js-cookie';
-import { SnakeDirections } from '../../snake/snake-directions';
+import { Direction, Frame, Type, Part } from './frame.interface';
 
 @Injectable({
   providedIn: 'root'
@@ -28,28 +28,28 @@ export class DataService {
     this.highScoreSource.next(highScore);
   }
 
-  private mountInitialSnake(snakeSize: number, matrix: any[]): any[] {
+  private mountInitialSnake(snakeSize: number, matrix: Frame[][]): Frame[][] {
     const initialPositionX = 7;
     const initialPositionY = 10;
-    const initialDirection = SnakeDirections.DIRECTIONS.right;
+
     const matrixCopy = [...matrix];
 
     Array(snakeSize).fill('').map((_, index) => {
-      let part = 'body';
+      let part = Part.body;
 
       if (index === 0) {
-        part = 'tail';
+        part = Part.tail;
       } else if (index === (snakeSize - 1)) {
-        part = 'head';
+        part = Part.head;
       }
       const snakePiece = {
-        type: 'snake',
+        type: Type.snake,
         part,
-        direction: initialDirection,
+        direction: Direction.right,
       };
 
       matrixCopy[initialPositionX + index][initialPositionY].isFullFilled = true;
-      matrixCopy[initialPositionX + index][initialPositionY].filledObject = snakePiece;
+      matrixCopy[initialPositionX + index][initialPositionY].filledBy = snakePiece;
     });
 
     return matrixCopy;
@@ -64,7 +64,7 @@ export class DataService {
     this.setMatrix(freshMatrix);
   }
 
-  public setMatrix(matrix: any): void {
+  public setMatrix(matrix: Frame[][]): void {
     this.matrixSource.next(matrix);
   }
 
@@ -97,20 +97,32 @@ export class DataService {
     this.scoreSource.next(newScore);
   }
 
-  private createEmptyMatrix(): any {
+  private createEmptyFrame(left: number, top: number, index: [number, number]): Frame {
+    const emptyFrame: Frame = {
+      left,
+      top,
+      isFullFilled: false,
+      filledBy: {
+        type: Type.empty,
+        part: Part.empty,
+        direction: Direction.empty,
+      },
+      index,
+    };
+
+    return emptyFrame;
+  }
+
+  private createEmptyMatrix(): Frame[][] {
     const matrix = Array(this.fieldSizeX / this.frameSize)
       .fill('')
-      .map((_, indexWidth) => Array(this.fieldSizeY / this.frameSize).fill('').map((__, indexHeight) => ({
-        left: indexWidth * this.frameSize,
-        top: indexHeight * this.frameSize,
-        isFullFilled: false,
-        filledObject: {
-          type: '',
-          part: '',
-          direction: {},
-        },
-        index: [indexWidth, indexHeight],
-      })));
+      .map((_, indexWidth) => Array(this.fieldSizeY / this.frameSize).fill('')
+        .map((__, indexHeight) =>
+          this.createEmptyFrame(
+            indexWidth * this.frameSize,
+            indexHeight * this.frameSize,
+            [indexWidth, indexHeight]
+          )));
 
     return matrix;
   }

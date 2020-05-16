@@ -1,6 +1,7 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
-import { DataService } from '../service/data/data.service';
+import {Component, OnDestroy, OnInit} from '@angular/core';
+import {DataService} from '../service/data/data.service';
 import {Subscription} from 'rxjs';
+import {Direction, Frame, Part, Type} from '../service/data/frame.interface';
 
 @Component({
   selector: 'app-food',
@@ -27,7 +28,7 @@ export class FoodComponent implements OnInit, OnDestroy {
     this.matrixSubscription.unsubscribe();
   }
 
-  public generateFoodInARandomPosition(quantity: number, matrix: any[]): void {
+  public generateFoodInARandomPosition(quantity: number, matrix: Frame[][]): void {
     const matrixCopy = [...matrix];
 
     Array(quantity).fill('').map((_, index) => {
@@ -45,8 +46,10 @@ export class FoodComponent implements OnInit, OnDestroy {
       }
 
       matrixCopy[frameX][frameY].isFullFilled = true;
-      matrixCopy[frameX][frameY].filledObject = {
-        type: 'food',
+      matrixCopy[frameX][frameY].filledBy = {
+        type: Type.food,
+        part: Part.empty,
+        direction: Direction.empty,
       };
     });
 
@@ -57,11 +60,11 @@ export class FoodComponent implements OnInit, OnDestroy {
     return Math.round((Math.random() * (max - min) + min) / frame) * frame;
   }
 
-  private calculateFoodPieces(matrix): any[] {
+  private calculateFoodPieces(matrix: Frame[][]): any[] {
     const snakeFoods = [];
 
     matrix.map(line => {
-      const filledFramesByFood = line.filter(c => c.isFullFilled && c.filledObject.type === 'food');
+      const filledFramesByFood = line.filter(c => c.isFullFilled && c.filledBy.type === Type.food);
 
       filledFramesByFood.map((fl) => {
         snakeFoods.push(

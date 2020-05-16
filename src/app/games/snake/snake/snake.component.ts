@@ -1,7 +1,8 @@
-import { Component, HostListener, OnInit, OnDestroy } from '@angular/core';
-import { DataService } from '../service/data/data.service';
-import { SnakeDirections } from './snake-directions';
-import { Subscription } from 'rxjs';
+import {Component, HostListener, OnDestroy, OnInit} from '@angular/core';
+import {DataService} from '../service/data/data.service';
+import {KeyPressMovement, SnakeDirection, SnakeDirections} from './snake-directions';
+import {Subscription} from 'rxjs';
+import {Direction, Frame, Part, Type} from '../service/data/frame.interface';
 
 @Component({
   selector: 'app-snake',
@@ -10,10 +11,10 @@ import { Subscription } from 'rxjs';
 })
 
 export class SnakeComponent implements OnInit, OnDestroy {
-  private matrix = [];
+  private matrix: Frame[][] = [];
   private snakeSpeed = 50;
   private intervalId: ReturnType<typeof setInterval>;
-  private newDirectionsQueue = [];
+  private newDirectionsQueue: Direction[] = [];
   private increaseSnake = 0;
   private matrixSubscription: Subscription;
   private moveSubscription: Subscription;
@@ -22,12 +23,10 @@ export class SnakeComponent implements OnInit, OnDestroy {
 
   @HostListener('window:keydown', ['$event'])
   keyEvent(event: KeyboardEvent) {
-    const directionKey = Object.keys(SnakeDirections.DIRECTIONS).find(d =>
-      SnakeDirections.DIRECTIONS[d].keyPressValue === event.key
-    );
+    const snakeDirection = SnakeDirections.getSnakeDirectionByKeyPressValue(event.key);
 
-    if (directionKey) {
-      this.changeDirection(directionKey);
+    if (snakeDirection) {
+      this.changeDirection(snakeDirection.direction);
     }
   }
 
@@ -53,11 +52,11 @@ export class SnakeComponent implements OnInit, OnDestroy {
     this.moveSubscription.unsubscribe();
   }
 
-  private calculateSnakePieces(matrix): any[] {
+  private calculateSnakePieces(matrix): Frame[][] {
     const snakePieces = [];
 
     matrix.map(line => {
-      const filledFramesBySnake = line.filter(c => c.isFullFilled && c.filledObject.type === 'snake');
+      const filledFramesBySnake = line.filter(c => c.isFullFilled && c.filledBy.type === Type.snake);
       filledFramesBySnake.map((fl) => {
         snakePieces.push(
           {
@@ -65,8 +64,8 @@ export class SnakeComponent implements OnInit, OnDestroy {
             height: this.data.frameSize,
             top: fl.top,
             left: fl.left,
-            direction: fl.filledObject.direction,
-            part: fl.filledObject.part,
+            direction: fl.filledBy.direction,
+            part: fl.filledBy.part,
             index: fl.index,
           }
         );
@@ -76,11 +75,10 @@ export class SnakeComponent implements OnInit, OnDestroy {
     return snakePieces;
   }
 
-  private isValidMovement(newDirectionKey: string, headDirection): boolean {
-    const newDirection = SnakeDirections.DIRECTIONS[newDirectionKey];
-    const allowedMovements = headDirection.allowedMovements;
+  private isValidMovement(newDirection: Direction, headDirection: Direction): boolean {
+    const headDirectionObj: SnakeDirection = SnakeDirections.getSnakeDirectionByDirection(headDirection);
 
-    return newDirection && allowedMovements.includes(newDirection.value);
+    return headDirectionObj.allowedMovements.includes(newDirection);
   }
 
   private stop(): void {
@@ -89,16 +87,16 @@ export class SnakeComponent implements OnInit, OnDestroy {
 
   private findNextFrameByDirection(posX, posY, direction) {
     switch (direction) {
-      case SnakeDirections.DIRECTIONS.right.value:
+      case Direction.right:
         return [posX + 1, posY];
         break;
-      case SnakeDirections.DIRECTIONS.left.value:
+      case Direction.left:
         return [posX - 1, posY];
         break;
-      case SnakeDirections.DIRECTIONS.top.value:
+      case Direction.up:
         return [posX, posY - 1];
         break;
-      case SnakeDirections.DIRECTIONS.bottom.value:
+      case Direction.down:
         return [posX, posY + 1];
         break;
     }
@@ -107,15 +105,15 @@ export class SnakeComponent implements OnInit, OnDestroy {
   private move(): void {
     this.intervalId = setInterval(() => {
       const matrixCopy = [...this.matrix];
-      const snakeHead = this.snakePieces.find(piece => piece.part === 'head');
-      const snakeTail = this.snakePieces.find(piece => piece.part === 'tail');
+      const snakeHead = this.snakePieces.find(piece => piece.part === Part.head);
+      const snakeTail = this.snakePieces.find(piece => piece.part === Part.tail);
       const headX = snakeHead.index[0];
       const headY = snakeHead.index[1];
       const tailX = snakeTail.index[0];
       const tailY = snakeTail.index[1];
 
-      const newTailElementIndex = this.findNextFrameByDirection(tailX, tailY, snakeTail.direction.value);
-      const newHeadElementIndex = this.findNextFrameByDirection(headX, headY, snakeHead.direction.value);
+      const newTailElementIndex = this.findNextFrameByDirection(tailX, tailY, snakeTail.direction);
+      const newHeadElementIndex = this.findNextFrameByDirection(headX, headY, snakeHead.direction);
 
       const newHeadX = newHeadElementIndex[0];
       const newHeadY = newHeadElementIndex[1];
@@ -129,7 +127,7 @@ export class SnakeComponent implements OnInit, OnDestroy {
 
       try {
         newHeadElement = matrixCopy[newHeadX][newHeadY];
-        if (newHeadElement.isFullFilled && newHeadElement.filledObject.type === 'snake') {
+        if (newHeadElement.isFullFilled && newHeadElement.filledBy.type === Type.snake) {
           throw new Error('snake collision detected!');
         }
       } catch (e) {
@@ -139,7 +137,7 @@ export class SnakeComponent implements OnInit, OnDestroy {
         return;
       }
 
-      const foodWasCaught = newHeadElement.isFullFilled && newHeadElement.filledObject.type === 'food';
+      const foodWasCaught = newHeadElement.isFullFilled && newHeadElement.filledBy.type === Type.food;
 
       if (foodWasCaught) {
         this.data.incrementScore(150);
@@ -150,14 +148,18 @@ export class SnakeComponent implements OnInit, OnDestroy {
       // only move the tail to the forward position
       if (!this.increaseSnake) {
         oldTailElement.isFullFilled = false;
-        oldTailElement.filledObject = {};
+        oldTailElement.filledBy = {
+          type: Type.empty,
+          part: Part.empty,
+          direction: Direction.empty,
+        };
 
-        newTailElement.filledObject.part = 'tail';
+        newTailElement.filledBy.part = Part.tail;
       } else {
         this.increaseSnake -= 1;
       }
 
-      oldHeadElement.filledObject.part = 'body';
+      oldHeadElement.filledBy.part = Part.body;
 
       const newDirectionsQueueLength = this.newDirectionsQueue.length;
       const newDirection = this.newDirectionsQueue[newDirectionsQueueLength - 1];
@@ -166,15 +168,15 @@ export class SnakeComponent implements OnInit, OnDestroy {
       if (newDirection) {
         this.newDirectionsQueue.pop();
 
-        if (this.isValidMovement(newDirection.value, snakeHead.direction)) {
+        if (this.isValidMovement(newDirection, snakeHead.direction)) {
           direction = newDirection;
         }
       }
 
       newHeadElement.isFullFilled = true;
-      newHeadElement.filledObject = {
-        type: 'snake',
-        part: 'head',
+      newHeadElement.filledBy = {
+        type: Type.snake,
+        part: Part.head,
         direction,
       };
 
@@ -182,8 +184,7 @@ export class SnakeComponent implements OnInit, OnDestroy {
     }, this.snakeSpeed);
   }
 
-  public changeDirection(newDirectionKey: string): void {
-    const newDirection = SnakeDirections.DIRECTIONS[newDirectionKey];
+  public changeDirection(newDirection: Direction): void {
     this.newDirectionsQueue.push(newDirection);
   }
 }

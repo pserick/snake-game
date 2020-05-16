@@ -1,24 +1,47 @@
+import { Direction } from '../service/data/frame.interface';
+
+export enum KeyPressMovement {
+  up = 'ArrowUp',
+  down = 'ArrowDown',
+  left = 'ArrowLeft',
+  right = 'ArrowRight',
+}
+
+export interface SnakeDirection {
+  direction: Direction;
+  keyPressValue: KeyPressMovement;
+  allowedMovements: Direction[];
+}
+
 export class SnakeDirections {
-  public static DIRECTIONS = {
-    top: {
-      value: 'top',
-      keyPressValue: 'ArrowUp',
-      allowedMovements: ['left', 'right'],
+  private static directions: SnakeDirection[] =     [
+    {
+      direction: Direction.up,
+      keyPressValue: KeyPressMovement.up,
+      allowedMovements: [Direction.left, Direction.right],
     },
-    bottom: {
-      value: 'bottom',
-      keyPressValue: 'ArrowDown',
-      allowedMovements: ['left', 'right'],
+    {
+      direction: Direction.down,
+      keyPressValue: KeyPressMovement.down,
+      allowedMovements: [Direction.left, Direction.right],
     },
-    left: {
-      value: 'left',
-      keyPressValue: 'ArrowLeft',
-      allowedMovements: ['top', 'bottom'],
+    {
+      direction: Direction.left,
+      keyPressValue: KeyPressMovement.left,
+      allowedMovements: [Direction.up, Direction.down],
     },
-    right: {
-      value: 'right',
-      keyPressValue: 'ArrowRight',
-      allowedMovements: ['top', 'bottom'],
+    {
+      direction: Direction.right,
+      keyPressValue: KeyPressMovement.right,
+      allowedMovements: [Direction.up, Direction.down],
     },
-  };
+  ];
+
+  public static getSnakeDirectionByDirection(direction: Direction): SnakeDirection {
+    return this.directions.find(d => d.direction === direction);
+  }
+
+  public static getSnakeDirectionByKeyPressValue(keyPressValue: string): SnakeDirection {
+    return this.directions.find(d => d.keyPressValue === keyPressValue);
+  }
 }
