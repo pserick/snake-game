@@ -1,6 +1,6 @@
 import { Direction } from '../service/data/frame.interface';
 
-export enum KeyPressMovement {
+enum KeyPressMovement {
   up = 'ArrowUp',
   down = 'ArrowDown',
   left = 'ArrowLeft',

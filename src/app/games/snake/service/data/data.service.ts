@@ -11,7 +11,7 @@ export class DataService {
   public frameSize = 8;
   public fieldSizeX = 100 * this.frameSize;
   public fieldSizeY = 50 * this.frameSize;
-  private matrixSource = new BehaviorSubject<any>(this.createEmptyMatrix());
+  private matrixSource = new BehaviorSubject<Frame[][]>(this.createEmptyMatrix());
   private scoreSource = new BehaviorSubject<number>(0);
   private highScoreSource = new BehaviorSubject<number>(0);
   private showMenuSource = new BehaviorSubject<boolean>(false);

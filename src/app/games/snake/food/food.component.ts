@@ -3,13 +3,20 @@ import {DataService} from '../service/data/data.service';
 import {Subscription} from 'rxjs';
 import {Direction, Frame, Part, Type} from '../service/data/frame.interface';
 
+interface SnakeFood {
+  width: number;
+  height: number;
+  top: number;
+  left: number;
+}
+
 @Component({
   selector: 'app-food',
   templateUrl: './food.component.html',
   styleUrls: ['./food.component.styl']
 })
 export class FoodComponent implements OnInit, OnDestroy {
-  public snakeFoods = [];
+  public snakeFoods: SnakeFood[] = [];
   private matrixSubscription: Subscription;
 
   constructor(private data: DataService) { }
@@ -60,8 +67,8 @@ export class FoodComponent implements OnInit, OnDestroy {
     return Math.round((Math.random() * (max - min) + min) / frame) * frame;
   }
 
-  private calculateFoodPieces(matrix: Frame[][]): any[] {
-    const snakeFoods = [];
+  private calculateFoodPieces(matrix: Frame[][]): SnakeFood[] {
+    const snakeFoods: Array<SnakeFood> = [];
 
     matrix.map(line => {
       const filledFramesByFood = line.filter(c => c.isFullFilled && c.filledBy.type === Type.food);
@@ -73,7 +80,6 @@ export class FoodComponent implements OnInit, OnDestroy {
             height: this.data.frameSize,
             top: fl.top,
             left: fl.left,
-            index: fl.index,
           }
         );
       });

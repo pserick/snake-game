@@ -1,8 +1,18 @@
 import {Component, HostListener, OnDestroy, OnInit} from '@angular/core';
-import {DataService} from '../service/data/data.service';
-import {KeyPressMovement, SnakeDirection, SnakeDirections} from './snake-directions';
+import { DataService } from '../service/data/data.service';
+import { SnakeDirection, SnakeDirections} from './snake-directions';
 import {Subscription} from 'rxjs';
 import {Direction, Frame, Part, Type} from '../service/data/frame.interface';
+
+interface SnakePiece {
+  width: number;
+  height: number;
+  top: number;
+  left: number;
+  direction: Direction;
+  part: Part;
+  index: [number, number];
+}
 
 @Component({
   selector: 'app-snake',
@@ -12,14 +22,14 @@ import {Direction, Frame, Part, Type} from '../service/data/frame.interface';
 
 export class SnakeComponent implements OnInit, OnDestroy {
   private matrix: Frame[][] = [];
+  private newDirectionsQueue: Direction[] = [];
   private snakeSpeed = 50;
   private intervalId: ReturnType<typeof setInterval>;
-  private newDirectionsQueue: Direction[] = [];
   private increaseSnake = 0;
   private matrixSubscription: Subscription;
   private moveSubscription: Subscription;
 
-  public snakePieces = [];
+  public snakePieces: SnakePiece[] = [];
 
   @HostListener('window:keydown', ['$event'])
   keyEvent(event: KeyboardEvent) {
@@ -52,8 +62,8 @@ export class SnakeComponent implements OnInit, OnDestroy {
     this.moveSubscription.unsubscribe();
   }
 
-  private calculateSnakePieces(matrix): Frame[][] {
-    const snakePieces = [];
+  private calculateSnakePieces(matrix): SnakePiece[] {
+    const snakePieces: SnakePiece[] = [];
 
     matrix.map(line => {
       const filledFramesBySnake = line.filter(c => c.isFullFilled && c.filledBy.type === Type.snake);
