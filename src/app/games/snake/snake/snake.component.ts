@@ -51,6 +51,7 @@ export class SnakeComponent implements OnInit, OnDestroy {
     this.moveSubscription = this.data.currentMoveSnake.subscribe(moveSnake => {
       this.stop();
       if (moveSnake === true) {
+        this.newDirectionsQueue = [];
         this.move();
       }
     });
